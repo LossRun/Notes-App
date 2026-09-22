@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/status-active-success.svg" alt="Status">
+  <img src="https://img.shields.io/badge/status-deactive-success.svg" alt="Status">
   <img src="https://img.shields.io/badge/platform-web%20%7C%20mobile-blue.svg" alt="Platform">
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
   <img src="https://img.shields.io/badge/language-JavaScript-yellow.svg" alt="Language">
