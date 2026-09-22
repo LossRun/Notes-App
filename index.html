@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" data-animations="true" data-theme="dark" data-view-mode="grid">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+  <title>Notes</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- View 1: Main Workspace / Notes Stream -->
+    <section id="list-view" class="view view-screen active">
+      <header class="top-bar">
+        <h1 class="app-title-large">Notes</h1>
+        <div class="actions">
+          <button id="cmd-palette-btn" class="icon-btn" title="Command Menu (Ctrl+K)">
+            <svg class="svg-icon-sm" viewBox="0 0 24 24"><path d="M20 19.59V4c0-.55-.45-1-1-1H5c-.55 0-1 .45-1 1v15.59c0 .89 1.08 1.34 1.71.71L12 14.21l6.29 6.09c.63.63 1.71.18 1.71-.71z"/></svg>
+          </button>
+          <button id="view-mode-toggle-btn" class="icon-btn" title="Grid / List Switch">
+            <svg id="view-mode-icon" class="svg-icon-sm" viewBox="0 0 24 24"><path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/></svg>
+          </button>
+          <button id="home-menu-btn" class="icon-btn" aria-label="Menu">
+            <svg class="svg-icon-sm" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div id="home-popup" class="popover-menu hidden">
+        <button id="pop-backup" class="popover-item">Export Backup</button>
+        <button id="pop-trash" class="popover-item">Recycle Bin</button>
+        <button id="pop-settings" class="popover-item">Settings</button>
+      </div>
+
+      <div id="search-box-wrap" class="search-wrap">
+        <div class="search-input-shell">
+          <svg class="svg-icon-sm search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" id="search-input" placeholder="Search notes or #tags..." autocomplete="off">
+          <button id="search-clear-btn" class="icon-btn-micro hidden" aria-label="Clear">✕</button>
+        </div>
+      </div>
+
+      <div id="smart-tags-bar" class="tags-scroll-bar">
+        <button type="button" class="tag-chip active" data-filter="all">All</button>
+        <button type="button" class="tag-chip" data-filter="pinned">Pinned</button>
+      </div>
+
+      <main id="notes-container" class="notes-grid"></main>
+
+      <div id="empty-state" class="empty-state hidden">
+        <p id="empty-state-text">No notes yet</p>
+      </div>
+
+      <button id="new-note-btn" class="fab" aria-label="New Note">
+        <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      </button>
+    </section>
+
+    <!-- View 2: Note Editor View -->
+    <section id="editor-view" class="view view-screen">
+      <header class="top-bar editor-bar ambient-target">
+        <button id="editor-back-btn" class="icon-btn" aria-label="Back">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </button>
+        <div class="actions">
+          <button id="editor-pin-btn" class="icon-btn" title="Pin Note">
+            <svg class="svg-icon-sm pin-icon" viewBox="0 0 24 24"><path d="M16 12V4H17V2H7V4H8V12L5 15V17H11V22L12 23L13 22V17H19V15L16 12Z"/></svg>
+          </button>
+          <button id="editor-overflow-btn" class="icon-btn keyboard-guard" aria-label="Options">
+            <svg class="svg-icon-sm" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="editor-body">
+        <input type="text" id="note-title" placeholder="Title" autocomplete="off">
+        <div class="note-meta-subtitle ambient-target" id="note-meta-subtitle"></div>
+        <div id="note-content" class="editor-editable" contenteditable="true" data-placeholder="Start typing or use markdown (e.g. # Heading, $E=mc^2$, [] checklist)..."></div>
+      </main>
+
+      <div id="editor-bottom-strip" class="editor-bottom-strip keyboard-guard ambient-target">
+        <div id="editor-overflow-popup" class="popover-menu-above hidden keyboard-guard">
+          <button id="btn-insert-math" class="popover-item keyboard-guard">Insert LaTeX Math</button>
+          <button id="btn-export-md" class="popover-item keyboard-guard">Export Markdown (.md)</button>
+          <button id="btn-export-txt" class="popover-item keyboard-guard">Export Text (.txt)</button>
+          <button id="btn-delete-active" class="popover-item danger-item keyboard-guard">Delete Note</button>
+        </div>
+
+        <div class="dock-actions-row">
+          <button type="button" class="dock-btn keyboard-guard" data-cmd="bold" title="Bold"><b>B</b></button>
+          <button type="button" class="dock-btn keyboard-guard" data-cmd="italic" title="Italic"><i>I</i></button>
+          <button type="button" class="dock-btn keyboard-guard" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+          <button type="button" id="dock-btn-checklist" class="dock-btn keyboard-guard" title="Checklist">☑</button>
+          <button type="button" id="dock-btn-math" class="dock-btn keyboard-guard" title="LaTeX Formula">Math</button>
+          <button type="button" id="dock-btn-clock" class="dock-btn keyboard-guard" title="Timestamp">⏱</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- View 3: Native Settings Screen -->
+    <section id="settings-view" class="view view-screen">
+      <header class="top-bar">
+        <button id="settings-back-btn" class="icon-btn" aria-label="Back">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </button>
+        <h1 class="app-title-standard">Settings</h1>
+      </header>
+
+      <main class="settings-body">
+        <div class="setting-item" id="opt-theme-toggle">
+          <div class="setting-text-col">
+            <span class="setting-name">Dark Theme</span>
+            <span class="setting-val" id="val-theme-status">Dark mode active</span>
+          </div>
+          <label class="native-switch">
+            <input type="checkbox" id="switch-theme" checked>
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+        <div class="setting-item" id="opt-anim-toggle">
+          <div class="setting-text-col">
+            <span class="setting-name">Interface Animations</span>
+            <span class="setting-val" id="val-anim-status">Enabled (fluid transitions)</span>
+          </div>
+          <label class="native-switch">
+            <input type="checkbox" id="switch-animations" checked>
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+        <div class="setting-item" id="opt-list-order">
+          <div class="setting-text-col">
+            <span class="setting-name">Sort Order</span>
+            <span class="setting-val" id="val-list-order">By modified</span>
+          </div>
+        </div>
+        <div class="setting-item" id="opt-backup-export">
+          <div class="setting-text-col">
+            <span class="setting-name">Backup All Notes</span>
+            <span class="setting-val">Export JSON archive</span>
+          </div>
+        </div>
+        <div class="setting-item" id="opt-backup-import">
+          <div class="setting-text-col">
+            <span class="setting-name">Restore Backup</span>
+            <span class="setting-val">Import JSON archive</span>
+          </div>
+          <input type="file" id="settings-file-input" accept=".json" style="display:none;">
+        </div>
+      </main>
+    </section>
+
+    <!-- View 4: Recycle Bin Stream -->
+    <section id="trash-view" class="view view-screen">
+      <header class="top-bar">
+        <button id="trash-back-btn" class="icon-btn" aria-label="Back">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </button>
+        <h1 class="app-title-standard">Recycle Bin</h1>
+        <div class="actions">
+          <button id="trash-empty-all-btn" class="icon-btn danger-btn" aria-label="Empty All" title="Empty Trash">
+            <svg class="svg-icon-sm" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <main id="trash-container" class="notes-grid"></main>
+
+      <div id="trash-empty-state" class="empty-state hidden">
+        <p>Recycle bin is empty</p>
+      </div>
+    </section>
+
+    <!-- View 5: Read-Only Trashed Note Viewer -->
+    <section id="trash-preview-view" class="view view-screen">
+      <header class="top-bar">
+        <button id="trash-preview-back-btn" class="icon-btn" aria-label="Back">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </button>
+        <h1 class="app-title-standard">Note Preview</h1>
+      </header>
+
+      <main class="editor-body">
+        <h2 id="trash-preview-title" class="preview-title"></h2>
+        <div id="trash-preview-date" class="note-meta-subtitle"></div>
+        <div id="trash-preview-content" class="preview-content"></div>
+      </main>
+
+      <footer class="trash-preview-actions">
+        <button id="trash-preview-restore-btn" class="btn btn-secondary">Restore Note</button>
+        <button id="trash-preview-delete-btn" class="btn btn-danger">Delete Forever</button>
+      </footer>
+    </section>
+
+    <!-- Command Palette (Ctrl+K) -->
+    <div id="cmd-palette-backdrop" class="modal-backdrop hidden">
+      <div class="cmd-palette-box">
+        <div class="cmd-search-row">
+          <svg class="svg-icon-sm" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" id="cmd-search-input" placeholder="Type a command or jump to note..." autocomplete="off">
+        </div>
+        <div id="cmd-results" class="cmd-results-list"></div>
+      </div>
+    </div>
+
+    <!-- Soft Confirmation Dialog -->
+    <div id="confirm-backdrop" class="modal-backdrop hidden">
+      <div class="modal-box">
+        <h3 id="confirm-title" class="modal-title">Delete Note</h3>
+        <p id="confirm-message" class="modal-message">Move this note to the recycle bin?</p>
+        <div class="modal-actions">
+          <button id="confirm-cancel-btn" class="btn btn-secondary">Cancel</button>
+          <button id="confirm-action-btn" class="btn btn-danger">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
